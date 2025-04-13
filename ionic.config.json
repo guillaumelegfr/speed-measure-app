@@ -1,0 +1,8 @@
+{
+  "name": "Speed measure app",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite",
+  "id": "e41064e6"
+}
