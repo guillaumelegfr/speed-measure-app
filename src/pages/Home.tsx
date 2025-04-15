@@ -1,24 +1,22 @@
 import React from 'react';
-import {
-  IonContent,
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonText,
+import { 
+  IonPage, 
+  IonHeader, 
+  IonToolbar, 
+  IonTitle, 
+  IonContent, 
+  IonText 
 } from '@ionic/react';
-import './Home.css'; // We'll define dark theme in CSS
-import { useSpeed } from '../hooks/useSpeed';  // Adjust the import path as needed
+import { useSpeed } from '../hooks/useSpeed'; // Adjust the path if necessary
 
 const Home: React.FC = () => {
-  // Call the custom hook to get speed and error values
-  const { speed, error } = useSpeed();
-  
+  const { speed, accuracy, error } = useSpeed();
+
   return (
     <IonPage>
       <IonHeader>
-        <IonToolbar color="dark">
-          <IonTitle>descent app</IonTitle>
+        <IonToolbar>
+          <IonTitle>Speedometer</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent className="ion-padding">
@@ -30,8 +28,13 @@ const Home: React.FC = () => {
           <IonText>
             <p>
               {speed !== null
-                ? `Speed: ${speed.toFixed(2)} km/h`
-                : 'calculating speed...'}
+                ? `Speed: ${speed.toFixed(1)} km/h`
+                : 'Calculating speed...'}
+            </p>
+            <p>
+              {accuracy !== null
+                ? `Accuracy: ${accuracy.toFixed(1)} m`
+                : 'Calculating accuracy...'}
             </p>
           </IonText>
         )}

@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { Geolocation, PermissionStatus } from '@capacitor/geolocation';
 
 /**
- * Custom hook to watch the user's speed in km/h.
+ * Custom hook to watch the user's speed (in km/h) and accuracy (in meters).
  * Automatically requests permission if not granted.
  */
 export const useSpeed = () => {
   const [speed, setSpeed] = useState<number | null>(null);
+  const [accuracy, setAccuracy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -14,10 +15,10 @@ export const useSpeed = () => {
 
     const setupLocation = async () => {
       try {
-        // Step 1: Check existing permission status
+        // Check for existing permission status
         const permissionStatus: PermissionStatus = await Geolocation.checkPermissions();
 
-        // Step 2: Request permissions if not already granted
+        // Request permission if not granted already
         if (permissionStatus.location !== 'granted') {
           const newPermission = await Geolocation.requestPermissions();
           if (newPermission.location !== 'granted') {
@@ -26,17 +27,20 @@ export const useSpeed = () => {
           }
         }
 
-        // Step 3: Start watching location if permission is granted
+        // Start watching the location with improved precision options
         watchId = await Geolocation.watchPosition(
-          { enableHighAccuracy: true },
+          {
+            enableHighAccuracy: true
+          },
           (pos, err) => {
             if (err) {
               setError(err.message || 'Location error');
             } else if (pos) {
-              // Get speed in m/s from pos.coords.speed, and convert it to km/h.
-              // Note: pos.coords.speed might be null if unavailable.
+              // Extract the speed (m/s) and convert it to km/h
               const currentSpeed = pos.coords.speed;
               setSpeed(currentSpeed !== null ? currentSpeed * 3.6 : null);
+              // Extract accuracy (in meters)
+              setAccuracy(pos.coords.accuracy);
             }
           }
         );
@@ -51,7 +55,7 @@ export const useSpeed = () => {
 
     setupLocation();
 
-    // Cleanup: stop watching location on unmount
+    // Cleanup the position watcher on unmount
     return () => {
       if (watchId) {
         Geolocation.clearWatch({ id: watchId });
@@ -59,5 +63,5 @@ export const useSpeed = () => {
     };
   }, []);
 
-  return { speed, error };
+  return { speed, accuracy, error };
 };
