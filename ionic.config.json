@@ -1,5 +1,5 @@
 {
-  "name": "SpeedMeasureTest",
+  "name": "speed-measure-app",
   "integrations": {
     "capacitor": {}
   },
