@@ -27,16 +27,19 @@ export const useSpeed = () => {
         }
 
         // Step 3: Start watching location if permission is granted
-        watchId = await Geolocation.watchPosition({}, (pos, err) => {
-          if (err) {
-            setError(err.message || 'Location error');
-          } else if (pos) {
-            // Get speed in m/s from pos.coords.speed, and convert it to km/h.
-            // Note: pos.coords.speed might be null if unavailable.
-            const currentSpeed = pos.coords.speed;
-            setSpeed(currentSpeed !== null ? currentSpeed * 3.6 : null);
+        watchId = await Geolocation.watchPosition(
+          { enableHighAccuracy: true },
+          (pos, err) => {
+            if (err) {
+              setError(err.message || 'Location error');
+            } else if (pos) {
+              // Get speed in m/s from pos.coords.speed, and convert it to km/h.
+              // Note: pos.coords.speed might be null if unavailable.
+              const currentSpeed = pos.coords.speed;
+              setSpeed(currentSpeed !== null ? currentSpeed * 3.6 : null);
+            }
           }
-        });
+        );
       } catch (error: unknown) {
         if (error instanceof Error) {
           setError(error.message);
