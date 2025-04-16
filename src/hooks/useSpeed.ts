@@ -1,67 +1,43 @@
-import { useEffect, useState } from 'react';
-import { Geolocation, PermissionStatus } from '@capacitor/geolocation';
+import { useEffect, useState } from "react";
+import { Geolocation } from "@capacitor/geolocation";
+import { Capacitor } from "@capacitor/core";
 
-/**
- * Custom hook to watch the user's speed (in km/h) and accuracy (in meters).
- * Automatically requests permission if not granted.
- */
-export const useSpeed = () => {
+export function useSpeed() {
   const [speed, setSpeed] = useState<number | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let watchId: string;
+    async function requestPermissions() {
+      if (Capacitor.isNativePlatform()) {
+        const perm = await Geolocation.requestPermissions();
+        if (perm.location !== 'granted') {
+          setError('Location permission denied.');
+          return;
+        }
+      }
 
-    const setupLocation = async () => {
-      try {
-        // Check for existing permission status
-        const permissionStatus: PermissionStatus = await Geolocation.checkPermissions();
-
-        // Request permission if not granted already
-        if (permissionStatus.location !== 'granted') {
-          const newPermission = await Geolocation.requestPermissions();
-          if (newPermission.location !== 'granted') {
-            setError('Location permission denied');
+      const watchId = await Geolocation.watchPosition(
+        { enableHighAccuracy: true, maximumAge: 0 },
+        (position, err) => {
+          if (err) {
+            setError(err.message);
             return;
           }
-        }
-
-        // Start watching the location with improved precision options
-        watchId = await Geolocation.watchPosition(
-          {
-            enableHighAccuracy: true
-          },
-          (pos, err) => {
-            if (err) {
-              setError(err.message || 'Location error');
-            } else if (pos) {
-              // Extract the speed (m/s) and convert it to km/h
-              const currentSpeed = pos.coords.speed;
-              setSpeed(currentSpeed !== null ? currentSpeed * 3.6 : null);
-              // Extract accuracy (in meters)
-              setAccuracy(pos.coords.accuracy);
-            }
+          if (position) {
+            setSpeed(position.coords.speed);
+            setAccuracy(position.coords.accuracy);
           }
-        );
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError('Unexpected error during location setup');
         }
-      }
-    };
+      );
 
-    setupLocation();
+      return () => {
+        if (watchId) Geolocation.clearWatch({ id: watchId });
+      };
+    }
 
-    // Cleanup the position watcher on unmount
-    return () => {
-      if (watchId) {
-        Geolocation.clearWatch({ id: watchId });
-      }
-    };
+    requestPermissions();
   }, []);
 
   return { speed, accuracy, error };
-};
+}
